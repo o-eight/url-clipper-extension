@@ -39,9 +39,14 @@ const youtubeHandler = (function() {
   
   // YouTube情報をフォーマットする関数
   function formatYouTubeInfo(url, title, youtubeInfo, format) {
+    // YouTubeInfo が null または undefined の場合はデフォルトハンドラにフォールバック
+    if (!youtubeInfo) {
+      return defaultHandler.formatInfo(url, title, null, format);
+    }
+    
     let clipText = '';
-    const thumbnailUrl = youtubeInfo.thumbnailUrl;
-    const videoId = youtubeInfo.videoId;
+    const thumbnailUrl = youtubeInfo.thumbnailUrl || '';
+    const videoId = youtubeInfo.videoId || '';
     const description = youtubeInfo.description || '';
     const finalTitle = youtubeInfo.title || title;
     const finalUrl = youtubeInfo.url || url;
@@ -56,29 +61,35 @@ const youtubeHandler = (function() {
       case 'markdown':
         clipText = `[${escapeMarkdown(finalTitle)}](${finalUrl})`;
         if (description) clipText += `\n\n${escapeMarkdown(description)}`;
-        clipText += `\n\n![サムネイル](${thumbnailUrl})`;
+        if (thumbnailUrl) clipText += `\n\n![サムネイル](${thumbnailUrl})`;
         // 動画IDと時間情報を追加
-        clipText += `\n\nVideo ID: ${videoId}`;
-        if (timestamp) clipText += ` (${timestamp}秒から)`;
+        if (videoId) {
+          clipText += `\n\nVideo ID: ${videoId}`;
+          if (timestamp) clipText += ` (${timestamp}秒から)`;
+        }
         break;
       case 'html':
         clipText = `<a href="${finalUrl}">${escapeHtml(finalTitle)}</a>`;
         if (description) clipText += `<p>${escapeHtml(description)}</p>`;
-        clipText += `<br><img src="${thumbnailUrl}" alt="サムネイル">`;
+        if (thumbnailUrl) clipText += `<br><img src="${thumbnailUrl}" alt="サムネイル">`;
         // 動画IDと時間情報を追加
-        if (timestamp) {
-          clipText += `<p>動画ID: ${videoId} (${timestamp}秒から)</p>`;
-        } else {
-          clipText += `<p>動画ID: ${videoId}</p>`;
+        if (videoId) {
+          if (timestamp) {
+            clipText += `<p>動画ID: ${videoId} (${timestamp}秒から)</p>`;
+          } else {
+            clipText += `<p>動画ID: ${videoId}</p>`;
+          }
         }
         break;
       default: // plain
         clipText = `${finalTitle}\n${finalUrl}`;
         if (description) clipText += `\n\n${description}`;
-        clipText += `\nサムネイル: ${thumbnailUrl}`;
+        if (thumbnailUrl) clipText += `\nサムネイル: ${thumbnailUrl}`;
         // 動画IDと時間情報を追加
-        clipText += `\n動画ID: ${videoId}`;
-        if (timestamp) clipText += ` (${timestamp}秒から)`;
+        if (videoId) {
+          clipText += `\n動画ID: ${videoId}`;
+          if (timestamp) clipText += ` (${timestamp}秒から)`;
+        }
     }
     
     return clipText;
