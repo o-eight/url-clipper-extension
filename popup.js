@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const copyButton = document.getElementById('copy-button');
   const statusElement = document.getElementById('status');
   const formatSelect = document.getElementById('format-select');
+  const previewContainer = document.getElementById('preview-container');
+  const previewContent = document.getElementById('preview-content');
   
   // 統合されたコピーボタン - サイトタイプを自動判別して適切な情報を取得
   copyButton.addEventListener('click', function() {
@@ -60,6 +62,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     navigator.clipboard.writeText(clipText).then(function() {
       showStatus('コピーしました！');
+      showPreview(clipText, format);
     }, function(err) {
       showStatus('コピーできませんでした', 'red');
       console.error('クリップボードへのコピーに失敗: ', err);
@@ -94,6 +97,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     navigator.clipboard.writeText(clipText).then(function() {
       showStatus('情報をコピーしました！');
+      showPreview(clipText, format);
     }, function(err) {
       showStatus('コピーできませんでした', 'red');
       console.error('クリップボードへのコピーに失敗: ', err);
@@ -107,17 +111,24 @@ document.addEventListener('DOMContentLoaded', function() {
     
     switch(format) {
       case 'markdown':
-        clipText = `[${title}](${url})\n![サムネイル](${thumbnailUrl})`;
+        clipText = `[${title}](${url})`;
+        if (youtubeInfo.description) clipText += `\n\n${youtubeInfo.description}`;
+        clipText += `\n\n![サムネイル](${thumbnailUrl})`;
         break;
       case 'html':
-        clipText = `<a href="${url}">${title}</a><br><img src="${thumbnailUrl}" alt="サムネイル">`;
+        clipText = `<a href="${url}">${title}</a>`;
+        if (youtubeInfo.description) clipText += `<p>${youtubeInfo.description}</p>`;
+        clipText += `<br><img src="${thumbnailUrl}" alt="サムネイル">`;
         break;
       default: // plain
-        clipText = `${title}\n${url}\nサムネイル: ${thumbnailUrl}`;
+        clipText = `${title}\n${url}`;
+        if (youtubeInfo.description) clipText += `\n\n${youtubeInfo.description}`;
+        clipText += `\nサムネイル: ${thumbnailUrl}`;
     }
     
     navigator.clipboard.writeText(clipText).then(function() {
       showStatus('情報をコピーしました！');
+      showPreview(clipText, format);
     }, function(err) {
       showStatus('コピーできませんでした', 'red');
       console.error('クリップボードへのコピーに失敗: ', err);
@@ -133,6 +144,29 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() {
       statusElement.style.display = 'none';
     }, 2000);
+  }
+  
+  // プレビューを表示する関数
+  function showPreview(content, format) {
+    let displayContent = content;
+    
+    // HTML形式の場合はエスケープしてテキストとして表示
+    if (format === 'html') {
+      displayContent = escapeHtml(content);
+    }
+    
+    previewContent.textContent = displayContent;
+    previewContainer.style.display = 'block';
+  }
+  
+  // HTMLをエスケープする関数
+  function escapeHtml(html) {
+    return html
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
   
   // YouTube URLかどうかをチェック
