@@ -1,15 +1,13 @@
 // YouTube専用ハンドラ
 const youtubeHandler = (function() {
-  // YouTubeページからサムネイル情報を取得する関数（ページ内で実行）
-  function getYouTubeInfo() {
+  // YouTubeページから情報とサムネイルを取得する関数（ページ内で実行）
+  async function getYouTubeInfo() {
     try {
-      // まずOGP情報を取得（デフォルトハンドラの関数を再利用）
-      const ogpInfo = defaultHandler.getInfoFunction();
+      // URL取得
+      const url = window.location.href;
+      let videoId = '';
       
       // ビデオIDを取得
-      let videoId = '';
-      const url = window.location.href;
-      
       if (url.includes('youtube.com/watch')) {
         const urlParams = new URLSearchParams(window.location.search);
         videoId = urlParams.get('v');
@@ -17,19 +15,41 @@ const youtubeHandler = (function() {
         videoId = url.split('youtu.be/')[1].split('?')[0];
       }
       
-      // サムネイルURLを生成（高画質のものを選択）
-      let thumbnailUrl = '';
+      // OGP情報をまず取得（バックアップとして）
+      const ogpInfo = {
+        title: document.querySelector('meta[property="og:title"]')?.content,
+        description: document.querySelector('meta[property="og:description"]')?.content,
+        image: document.querySelector('meta[property="og:image"]')?.content,
+        url: document.querySelector('meta[property="og:url"]')?.content,
+      };
+      
+      // oEmbed APIからデータを取得
+      let oEmbedData = null;
       if (videoId) {
-        thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        try {
+          // oEmbed APIのエンドポイント
+          const oEmbedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+          const response = await fetch(oEmbedUrl);
+          
+          if (response.ok) {
+            oEmbedData = await response.json();
+          }
+        } catch (fetchError) {
+          console.error('oEmbed APIの呼び出しに失敗:', fetchError);
+          // フェッチに失敗した場合は続行（OGPデータを使用）
+        }
       }
       
-      // OGP情報とYouTube情報を結合
+      // oEmbedデータとOGP情報を結合
       return {
         videoId: videoId,
-        thumbnailUrl: thumbnailUrl || ogpInfo?.image,
-        title: ogpInfo?.title,
-        description: ogpInfo?.description,
-        url: ogpInfo?.url
+        thumbnailUrl: oEmbedData?.thumbnail_url || ogpInfo?.image,
+        title: oEmbedData?.title || ogpInfo?.title,
+        description: ogpInfo?.description, // oEmbedには説明がないためOGPから取得
+        url: ogpInfo?.url,
+        authorName: oEmbedData?.author_name,
+        authorUrl: oEmbedData?.author_url,
+        embedHtml: oEmbedData?.html
       };
     } catch (e) {
       console.error('YouTubeデータ取得エラー:', e);
@@ -50,45 +70,68 @@ const youtubeHandler = (function() {
     const description = youtubeInfo.description || '';
     const finalTitle = youtubeInfo.title || title;
     const finalUrl = youtubeInfo.url || url;
+    const authorName = youtubeInfo.authorName || '';
+    const authorUrl = youtubeInfo.authorUrl || '';
     
     // タイムスタンプがある場合（t=XXXのパラメータ）、URLに含める
     let timestamp = '';
+    let seconds = '';
     if (url.includes('t=')) {
       timestamp = url.split('t=')[1].split('&')[0];
+      // 時間形式に変換 (秒 -> mm:ss または hh:mm:ss)
+      if (timestamp.match(/^\d+$/)) {
+        seconds = parseInt(timestamp);
+        if (seconds < 60) {
+          timestamp = `0:${seconds.toString().padStart(2, '0')}`;
+        } else if (seconds < 3600) {
+          const mins = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+          timestamp = `${mins}:${secs.toString().padStart(2, '0')}`;
+        } else {
+          const hours = Math.floor(seconds / 3600);
+          const mins = Math.floor((seconds % 3600) / 60);
+          const secs = seconds % 60;
+          timestamp = `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+      }
     }
     
     switch(format) {
       case 'markdown':
         clipText = `[${escapeMarkdown(finalTitle)}](${finalUrl})`;
+        if (authorName) clipText += `\nチャンネル: [${escapeMarkdown(authorName)}](${authorUrl})`;
         if (description) clipText += `\n\n${escapeMarkdown(description)}`;
         if (thumbnailUrl) clipText += `\n\n![サムネイル](${thumbnailUrl})`;
         // 動画IDと時間情報を追加
         if (videoId) {
           clipText += `\n\nVideo ID: ${videoId}`;
-          if (timestamp) clipText += ` (${timestamp}秒から)`;
+          if (seconds) clipText += ` (${timestamp} から)`;
         }
         break;
       case 'html':
         clipText = `<a href="${finalUrl}">${escapeHtml(finalTitle)}</a>`;
+        if (authorName) clipText += `<br>チャンネル: <a href="${authorUrl}">${escapeHtml(authorName)}</a>`;
         if (description) clipText += `<p>${escapeHtml(description)}</p>`;
-        if (thumbnailUrl) clipText += `<br><img src="${thumbnailUrl}" alt="サムネイル">`;
+        // 埋め込みHTMLコードがある場合はそれを優先
+        if (youtubeInfo.embedHtml) {
+          clipText += `<br>${youtubeInfo.embedHtml}`;
+        } else if (thumbnailUrl) {
+          clipText += `<br><img src="${thumbnailUrl}" alt="サムネイル">`;
+        }
         // 動画IDと時間情報を追加
-        if (videoId) {
-          if (timestamp) {
-            clipText += `<p>動画ID: ${videoId} (${timestamp}秒から)</p>`;
-          } else {
-            clipText += `<p>動画ID: ${videoId}</p>`;
-          }
+        if (videoId && seconds) {
+          clipText += `<p>タイムスタンプ: ${timestamp}</p>`;
         }
         break;
       default: // plain
         clipText = `${finalTitle}\n${finalUrl}`;
+        if (authorName) clipText += `\nチャンネル: ${authorName} (${authorUrl})`;
         if (description) clipText += `\n\n${description}`;
         if (thumbnailUrl) clipText += `\nサムネイル: ${thumbnailUrl}`;
         // 動画IDと時間情報を追加
         if (videoId) {
           clipText += `\n動画ID: ${videoId}`;
-          if (timestamp) clipText += ` (${timestamp}秒から)`;
+          if (seconds) clipText += ` (${timestamp} から)`;
         }
     }
     
