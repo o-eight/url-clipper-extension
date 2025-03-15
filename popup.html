@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+    button {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #3367d6;
+    }
+    #status {
+      margin-top: 10px;
+      color: #4CAF50;
+      font-weight: bold;
+      text-align: center;
+      display: none;
+    }
+    .option {
+      margin: 10px 0;
+    }
+    select {
+      width: 100%;
+      padding: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>URL Clipper</h2>
+  
+  <div class="option">
+    <label for="format-select">コピー形式：</label>
+    <select id="format-select">
+      <option value="plain">プレーンテキスト (URL + タイトル)</option>
+      <option value="markdown">Markdown 形式</option>
+      <option value="html">HTML 形式</option>
+    </select>
+  </div>
+  
+  <button id="copy-button">URLとタイトルをコピー</button>
+  <button id="copy-youtube-button">YouTube情報をコピー</button>
+  
+  <div id="status">コピーしました！</div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>
