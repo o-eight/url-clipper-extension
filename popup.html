@@ -35,25 +35,6 @@
       width: 100%;
       padding: 5px;
     }
-    #preview-container {
-      margin-top: 15px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 10px;
-      background-color: #f9f9f9;
-      max-height: 200px;
-      overflow-y: auto;
-      display: none;
-    }
-    #preview-content {
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 12px;
-    }
-    .preview-title {
-      font-weight: bold;
-      margin-bottom: 5px;
-    }
   </style>
 </head>
 <body>
@@ -72,11 +53,12 @@
   
   <div id="status">コピーしました！</div>
   
-  <div id="preview-container">
-    <div class="preview-title">コピーされた内容：</div>
-    <div id="preview-content"></div>
-  </div>
-  
+  <!-- スクリプトの読み込み順序が重要 -->
+  <script src="utils.js"></script>
+  <script src="site-handlers/default-handler.js"></script>
+  <script src="site-handlers/handler-registry.js"></script>
+  <script src="site-handlers/youtube-handler.js"></script>
+  <!-- 他のサイトハンドラをここに追加 -->
   <script src="popup.js"></script>
 </body>
 </html>
