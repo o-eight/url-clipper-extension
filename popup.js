@@ -1,40 +1,18 @@
 document.addEventListener('DOMContentLoaded', function() {
   const copyButton = document.getElementById('copy-button');
-  const copyYouTubeButton = document.getElementById('copy-youtube-button');
   const statusElement = document.getElementById('status');
   const formatSelect = document.getElementById('format-select');
   
-  // 通常のURLとタイトルをコピーするボタン（OGP情報も取得）
+  // 統合されたコピーボタン - サイトタイプを自動判別して適切な情報を取得
   copyButton.addEventListener('click', function() {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       const currentTab = tabs[0];
       const url = currentTab.url;
       const title = currentTab.title;
       
-      // ページからOGP情報を取得
-      chrome.scripting.executeScript({
-        target: {tabId: currentTab.id},
-        function: getOGPInfo
-      }, function(results) {
-        if (results && results[0] && results[0].result) {
-          const ogpInfo = results[0].result;
-          copyWithOGPInfo(url, title, ogpInfo, formatSelect.value);
-        } else {
-          // OGP情報がない場合は通常コピー
-          copyToClipboard(url, title, formatSelect.value);
-        }
-      });
-    });
-  });
-  
-  // YouTube専用のコピーボタン
-  copyYouTubeButton.addEventListener('click', function() {
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      const currentTab = tabs[0];
-      const url = currentTab.url;
-      const title = currentTab.title;
-      
+      // YouTubeページかどうかをチェック
       if (isYouTubeUrl(url)) {
+        // YouTubeページの場合はYouTube専用の情報を取得
         chrome.scripting.executeScript({
           target: {tabId: currentTab.id},
           function: getYouTubeInfo
@@ -48,7 +26,19 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         });
       } else {
-        showStatus('YouTubeページではありません', 'red');
+        // YouTube以外のページではOGP情報を取得
+        chrome.scripting.executeScript({
+          target: {tabId: currentTab.id},
+          function: getOGPInfo
+        }, function(results) {
+          if (results && results[0] && results[0].result) {
+            const ogpInfo = results[0].result;
+            copyWithOGPInfo(url, title, ogpInfo, formatSelect.value);
+          } else {
+            // OGP情報がない場合は通常コピー
+            copyToClipboard(url, title, formatSelect.value);
+          }
+        });
       }
     });
   });
@@ -103,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     navigator.clipboard.writeText(clipText).then(function() {
-      showStatus('OGP情報を含めてコピーしました！');
+      showStatus('情報をコピーしました！');
     }, function(err) {
       showStatus('コピーできませんでした', 'red');
       console.error('クリップボードへのコピーに失敗: ', err);
@@ -127,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     navigator.clipboard.writeText(clipText).then(function() {
-      showStatus('YouTube情報をコピーしました！');
+      showStatus('情報をコピーしました！');
     }, function(err) {
       showStatus('コピーできませんでした', 'red');
       console.error('クリップボードへのコピーに失敗: ', err);

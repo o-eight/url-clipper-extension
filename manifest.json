@@ -1,9 +1,8 @@
-// manifest.json - 拡張機能の設定ファイル
 {
   "manifest_version": 3,
   "name": "URL Clipper",
   "version": "1.0",
-  "description": "現在のページのURLとタイトルをクリップボードにコピーします。YouTubeの場合はサムネイルも取得します。",
+  "description": "現在のページのURLとタイトル、および関連情報をクリップボードにコピーします。",
   "permissions": ["activeTab", "scripting", "clipboardWrite"],
   "action": {
     "default_popup": "popup.html",
