@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "URL Clipper",
   "version": "1.0",
-  "description": "現在のページのURLとタイトル、および関連情報をクリップボードにコピーします。",
+  "description": "ウェブページのURLとタイトル、OGP情報、サイト固有のメタデータをさまざまな形式でクリップボードにコピーします。YouTubeではoEmbed APIを活用して動画情報を取得。",
   "permissions": ["activeTab", "scripting", "clipboardWrite"],
   "action": {
     "default_popup": "popup.html",
