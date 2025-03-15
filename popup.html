@@ -35,6 +35,31 @@
       width: 100%;
       padding: 5px;
     }
+    /* プレビューエリアのスタイル */
+    #preview-container {
+      margin-top: 15px;
+      display: none;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 8px;
+      background-color: #f9f9f9;
+    }
+    #preview-label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #555;
+    }
+    #preview-content {
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      padding: 5px;
+      background-color: white;
+      border: 1px solid #eee;
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
@@ -47,6 +72,12 @@
       <option value="markdown">Markdown 形式</option>
       <option value="html">HTML 形式</option>
     </select>
+  </div>
+  
+  <!-- プレビューエリア -->
+  <div id="preview-container">
+    <div id="preview-label">プレビュー:</div>
+    <div id="preview-content"></div>
   </div>
   
   <button id="copy-button">URLと情報をコピー</button>

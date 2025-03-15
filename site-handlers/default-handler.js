@@ -38,13 +38,13 @@ const defaultHandler = (function() {
     
     switch(format) {
       case 'markdown':
-        clipText = `[${finalTitle}](${finalUrl})`;
-        if (description) clipText += `\n\n${description}`;
+        clipText = `[${escapeMarkdown(finalTitle)}](${finalUrl})`;
+        if (description) clipText += `\n\n${escapeMarkdown(description)}`;
         if (imageUrl) clipText += `\n\n![サムネイル](${imageUrl})`;
         break;
       case 'html':
-        clipText = `<a href="${finalUrl}">${finalTitle}</a>`;
-        if (description) clipText += `<p>${description}</p>`;
+        clipText = `<a href="${finalUrl}">${escapeHtml(finalTitle)}</a>`;
+        if (description) clipText += `<p>${escapeHtml(description)}</p>`;
         if (imageUrl) clipText += `<br><img src="${imageUrl}" alt="サムネイル">`;
         break;
       default: // plain
@@ -60,9 +60,19 @@ const defaultHandler = (function() {
     // ページから情報を取得する関数
     getInfoFunction: getOGPInfo,
     
+    // フォーマットのみを行う関数（プレビュー表示用）
+    formatInfo: function(url, title, ogpInfo, format) {
+      return formatWithOGPInfo(url, title, ogpInfo, format);
+    },
+    
     // 情報をフォーマットしてクリップボードにコピーする関数
-    formatAndCopy: function(url, title, ogpInfo, format, statusCallback) {
+    formatAndCopy: function(url, title, ogpInfo, format, statusCallback, previewCallback) {
       const clipText = formatWithOGPInfo(url, title, ogpInfo, format);
+      
+      // プレビューコールバックがある場合は実行
+      if (previewCallback) {
+        previewCallback(clipText);
+      }
       
       navigator.clipboard.writeText(clipText).then(function() {
         statusCallback('情報をコピーしました！');

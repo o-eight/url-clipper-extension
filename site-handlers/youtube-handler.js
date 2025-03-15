@@ -54,16 +54,16 @@ const youtubeHandler = (function() {
     
     switch(format) {
       case 'markdown':
-        clipText = `[${finalTitle}](${finalUrl})`;
-        if (description) clipText += `\n\n${description}`;
+        clipText = `[${escapeMarkdown(finalTitle)}](${finalUrl})`;
+        if (description) clipText += `\n\n${escapeMarkdown(description)}`;
         clipText += `\n\n![サムネイル](${thumbnailUrl})`;
         // 動画IDと時間情報を追加
         clipText += `\n\nVideo ID: ${videoId}`;
         if (timestamp) clipText += ` (${timestamp}秒から)`;
         break;
       case 'html':
-        clipText = `<a href="${finalUrl}">${finalTitle}</a>`;
-        if (description) clipText += `<p>${description}</p>`;
+        clipText = `<a href="${finalUrl}">${escapeHtml(finalTitle)}</a>`;
+        if (description) clipText += `<p>${escapeHtml(description)}</p>`;
         clipText += `<br><img src="${thumbnailUrl}" alt="サムネイル">`;
         // 動画IDと時間情報を追加
         if (timestamp) {
@@ -92,9 +92,19 @@ const youtubeHandler = (function() {
     // ページから情報を取得する関数
     getInfoFunction: getYouTubeInfo,
     
+    // フォーマットのみを行う関数（プレビュー表示用）
+    formatInfo: function(url, title, youtubeInfo, format) {
+      return formatYouTubeInfo(url, title, youtubeInfo, format);
+    },
+    
     // 情報をフォーマットしてクリップボードにコピーする関数
-    formatAndCopy: function(url, title, youtubeInfo, format, statusCallback) {
+    formatAndCopy: function(url, title, youtubeInfo, format, statusCallback, previewCallback) {
       const clipText = formatYouTubeInfo(url, title, youtubeInfo, format);
+      
+      // プレビューコールバックがある場合は実行
+      if (previewCallback) {
+        previewCallback(clipText);
+      }
       
       navigator.clipboard.writeText(clipText).then(function() {
         statusCallback('YouTube情報をコピーしました！');
