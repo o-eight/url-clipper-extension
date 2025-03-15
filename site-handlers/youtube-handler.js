@@ -102,11 +102,8 @@ const youtubeHandler = (function() {
         if (authorName) clipText += `\nチャンネル: [${escapeMarkdown(authorName)}](${authorUrl})`;
         if (description) clipText += `\n\n${escapeMarkdown(description)}`;
         if (thumbnailUrl) clipText += `\n\n![サムネイル](${thumbnailUrl})`;
-        // 動画IDと時間情報を追加
-        if (videoId) {
-          clipText += `\n\nVideo ID: ${videoId}`;
-          if (seconds) clipText += ` (${timestamp} から)`;
-        }
+        // タイムスタンプ情報を追加（動画IDなし）
+        if (seconds) clipText += `\n\n${timestamp} から再生`;
         break;
       case 'html':
         clipText = `<a href="${finalUrl}">${escapeHtml(finalTitle)}</a>`;
@@ -118,8 +115,8 @@ const youtubeHandler = (function() {
         } else if (thumbnailUrl) {
           clipText += `<br><img src="${thumbnailUrl}" alt="サムネイル">`;
         }
-        // 動画IDと時間情報を追加
-        if (videoId && seconds) {
+        // タイムスタンプ情報を追加（動画IDなし）
+        if (seconds) {
           clipText += `<p>タイムスタンプ: ${timestamp}</p>`;
         }
         break;
@@ -128,10 +125,9 @@ const youtubeHandler = (function() {
         if (authorName) clipText += `\nチャンネル: ${authorName} (${authorUrl})`;
         if (description) clipText += `\n\n${description}`;
         if (thumbnailUrl) clipText += `\nサムネイル: ${thumbnailUrl}`;
-        // 動画IDと時間情報を追加
-        if (videoId) {
-          clipText += `\n動画ID: ${videoId}`;
-          if (seconds) clipText += ` (${timestamp} から)`;
+        // タイムスタンプ情報のみ追加（動画IDなし）
+        if (seconds) {
+          clipText += `\n${timestamp} から再生`;
         }
     }
     
